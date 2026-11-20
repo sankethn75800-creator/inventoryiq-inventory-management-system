@@ -1,236 +1,388 @@
 
 import os
+from datetime import datetime
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import requests
 import streamlit as st
 
 
 # ==========================================
-# PAGE CONFIGURATION
+# CONFIGURATION
 # ==========================================
 
 st.set_page_config(
     page_title="InventoryIQ | Inventory Intelligence",
     page_icon="📦",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 DEFAULT_API_URL = (
     "https://inventoryiq-inventory-management-system.onrender.com"
 )
 
-API_URL = str(
-    st.secrets.get(
-        "API_BASE_URL",
-        os.getenv("API_BASE_URL", DEFAULT_API_URL)
-    )
-).rstrip("/")
+API_URL = os.getenv("API_URL", DEFAULT_API_URL).rstrip("/")
+
+try:
+    API_URL = st.secrets.get("API_URL", API_URL).rstrip("/")
+except (FileNotFoundError, KeyError):
+    pass
 
 
 # ==========================================
-# PROFESSIONAL DARK THEME
+# THEME AND STYLING
 # ==========================================
 
-st.markdown("""
-<style>
-.stApp {
-    background-color: #0B1120;
-    color: #F8FAFC;
-}
+st.markdown(
+    """
+    <style>
+    :root {
+        color-scheme: dark;
+    }
 
-[data-testid="stSidebar"] {
-    background-color: #111B2E;
-}
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        background: #0b1120 !important;
+        color: #f8fafc !important;
+    }
 
-h1, h2, h3 {
-    color: #FFFFFF !important;
-}
+    [data-testid="stHeader"] {
+        background: #0b1120 !important;
+    }
 
-[data-testid="stMetric"] {
-    background: #17243B;
-    border: 1px solid #334155;
-    padding: 20px;
-    border-radius: 12px;
-}
+    [data-testid="stSidebar"] {
+        background: #111b2e !important;
+        border-right: 1px solid #334155;
+    }
 
-[data-testid="stMetricLabel"] p,
-[data-testid="stMetricValue"] {
-    color: #FFFFFF !important;
-}
+    [data-testid="stSidebar"] * {
+        opacity: 1 !important;
+    }
 
-div[data-testid="stForm"] {
-    background: #17243B;
-    border: 1px solid #475569;
-    border-radius: 12px;
-    padding: 20px;
-}
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #f8fafc !important;
+    }
 
-[data-testid="stWidgetLabel"] p {
-    color: #F8FAFC !important;
-    font-weight: 600;
-}
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+        color: #cbd5e1 !important;
+    }
 
-[data-testid="stAlert"] p {
-    color: inherit !important;
-}
+    [data-testid="stSidebar"] a {
+        color: #93c5fd !important;
+    }
 
-div[data-baseweb="input"] input,
-div[data-baseweb="textarea"] textarea {
-    color: #111827 !important;
-    background-color: #FFFFFF !important;
-    -webkit-text-fill-color: #111827 !important;
-}
+    [data-testid="stSidebar"] [role="radiogroup"] label {
+        color: #ffffff !important;
+    }
 
-div[data-baseweb="input"],
-div[data-baseweb="textarea"] {
-    background-color: #FFFFFF !important;
-}
+    [data-testid="stSidebar"] [role="radiogroup"] label p {
+        color: #ffffff !important;
+        font-weight: 500;
+    }
 
-[data-testid="stNumberInput"] button {
-    color: #111827 !important;
-}
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
 
-.stButton > button[kind="primary"],
-[data-testid="stFormSubmitButton"] button {
-    background-color: #2563EB;
-    color: #FFFFFF !important;
-    border-radius: 8px;
-    border: none;
-    font-weight: 600;
-}
+    [data-testid="stMain"] p,
+    [data-testid="stMain"] label {
+        color: #e2e8f0;
+    }
 
-.stButton > button[kind="primary"]:hover,
-[data-testid="stFormSubmitButton"] button:hover {
-    background-color: #1D4ED8;
-    color: #FFFFFF !important;
-}
+    [data-testid="stCaptionContainer"] p {
+        color: #cbd5e1 !important;
+        opacity: 1 !important;
+    }
 
-hr {
-    border-color: #334155;
-}
-</style>
-""", unsafe_allow_html=True)
+    [data-testid="stMetric"] {
+        background: #19263e !important;
+        border: 1px solid #334766;
+        border-radius: 14px;
+        padding: 22px;
+        min-height: 130px;
+    }
+
+    [data-testid="stMetricLabel"] p {
+        color: #e2e8f0 !important;
+        font-weight: 600;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #ffffff !important;
+    }
+
+    [data-testid="stMetricDelta"] {
+        color: #34d399 !important;
+    }
+
+    div.stButton > button[kind="primary"],
+    div.stFormSubmitButton > button[kind="primary"] {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border: 1px solid #3b82f6 !important;
+        border-radius: 9px;
+        font-weight: 600;
+    }
+
+    div.stButton > button[kind="secondary"],
+    div.stFormSubmitButton > button[kind="secondary"] {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        border: 1px solid #475569 !important;
+        border-radius: 9px;
+    }
+
+    button:hover {
+        border-color: #60a5fa !important;
+    }
+
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"] > div,
+    [data-baseweb="textarea"] > div {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+    }
+
+    [data-baseweb="input"] input,
+    [data-baseweb="select"] input,
+    [data-baseweb="textarea"] textarea {
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
+    }
+
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] div {
+        color: #0f172a;
+    }
+
+    [data-testid="stAlert"] p {
+        color: #0f172a !important;
+    }
+
+    [data-testid="stDataFrame"] {
+        border: 1px solid #334155;
+        border-radius: 10px;
+    }
+
+    [data-testid="stForm"] {
+        background: #17243b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 20px;
+    }
+
+    div[data-testid="stExpander"] {
+        border: 1px solid #334155;
+        border-radius: 10px;
+    }
+
+    hr {
+        border-color: #334155 !important;
+    }
+
+    .iq-brand {
+        color: #ffffff !important;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+    }
+
+    .iq-subtitle {
+        color: #cbd5e1 !important;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.7px;
+        margin-bottom: 25px;
+    }
+
+    .iq-footer {
+        color: #cbd5e1 !important;
+        font-size: 13px;
+        margin-top: 25px;
+    }
+
+    .iq-status {
+        background: #064e3b;
+        border: 1px solid #10b981;
+        color: #ecfdf5 !important;
+        border-radius: 10px;
+        padding: 15px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .iq-error {
+        background: #450a0a;
+        border: 1px solid #ef4444;
+        color: #fecaca !important;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .iq-info {
+        background: #172554;
+        border: 1px solid #3b82f6;
+        color: #dbeafe !important;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # ==========================================
 # API HELPERS
 # ==========================================
 
-def api_request(method, endpoint, data=None, params=None):
+def api_request(method, endpoint, **kwargs):
+    url = f"{API_URL}{endpoint}"
+
     try:
         response = requests.request(
-            method=method,
-            url=f"{API_URL}{endpoint}",
-            json=data,
-            params=params,
-            timeout=75
+            method,
+            url,
+            timeout=65,
+            **kwargs,
         )
 
-        response.raise_for_status()
+        if response.status_code >= 400:
+            try:
+                body = response.json()
+                detail = body.get("detail", response.text)
+            except ValueError:
+                detail = response.text
+
+            raise RuntimeError(
+                f"API error {response.status_code}: {detail}"
+            )
 
         if not response.content:
             return {}
 
         return response.json()
 
-    except requests.exceptions.HTTPError as error:
-        response = error.response
-
-        try:
-            detail = response.json().get(
-                "detail", response.text
-            )
-        except (ValueError, AttributeError):
-            detail = response.text
-
+    except requests.exceptions.Timeout:
         raise RuntimeError(
-            f"API error {response.status_code}: {detail}"
-        ) from error
-
-    except requests.exceptions.RequestException as error:
-        raise RuntimeError(
-            f"Backend connection failed: {error}"
-        ) from error
-
-
-def get_data(endpoint):
-    try:
-        return api_request("GET", endpoint)
-    except RuntimeError as error:
-        st.error(str(error))
-        return None
-
-
-def perform_action(method, endpoint, payload=None):
-    try:
-        result = api_request(
-            method,
-            endpoint,
-            data=payload
+            "The server took too long to respond. "
+            "Render may be waking up. Please retry."
         )
-        return result
 
-    except RuntimeError as error:
-        st.error(str(error))
-        return None
+    except requests.exceptions.ConnectionError:
+        raise RuntimeError(
+            "Cannot connect to the backend API. "
+            "Check the Render service."
+        )
+
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f"Network error: {exc}")
+
+
+def get_products(search=None):
+    params = {"search": search} if search else None
+    return api_request("GET", "/products", params=params)
+
+
+def get_sales():
+    return api_request("GET", "/sales")
+
+
+def get_dashboard():
+    return api_request("GET", "/dashboard")
+
+
+def get_forecast(
+    product_id,
+    history_days=30,
+    forecast_days=7,
+    lead_time_days=3,
+):
+    return api_request(
+        "GET",
+        f"/forecast/{product_id}",
+        params={
+            "history_days": history_days,
+            "forecast_days": forecast_days,
+            "lead_time_days": lead_time_days,
+        },
+    )
+
+
+def get_recommendations():
+    return api_request("GET", "/recommendations")
 
 
 def money(value):
     return f"₹{float(value or 0):,.2f}"
 
 
-def normalize_list(data, key):
-    if isinstance(data, list):
-        return data
-
-    if isinstance(data, dict):
-        result = data.get(key, [])
-        return result if isinstance(result, list) else []
-
-    return []
+def show_error(exc):
+    st.error(str(exc))
 
 
-def product_name(product):
-    return str(product.get("name", "Unnamed Product"))
+def product_options(products):
+    return {
+        f"{p['id']} - {p['name']}": p
+        for p in products
+    }
 
 
-def stock_status(product):
-    quantity = int(product.get("quantity", 0))
-    threshold = int(
-        product.get("low_stock_threshold", 10)
-    )
+# ==========================================
+# CHART STYLING
+# ==========================================
 
-    if quantity == 0:
-        return "Out of Stock"
-
-    if quantity <= threshold:
-        return "Low Stock"
-
-    return "Healthy"
-
-
-def display_table(records):
-    if records:
-        st.dataframe(
-            pd.DataFrame(records),
-            use_container_width=True,
-            hide_index=True
-        )
-    else:
-        st.info("No records available.")
-
-
-def style_chart(fig):
+def style_chart(fig, height=370):
     fig.update_layout(
         template="plotly_dark",
-        paper_bgcolor="#0B1120",
-        plot_bgcolor="#17243B",
-        font_color="#F8FAFC",
-        margin=dict(l=20, r=20, t=30, b=20)
+        paper_bgcolor="#0b1120",
+        plot_bgcolor="#19263e",
+        font=dict(
+            family="Arial, sans-serif",
+            size=14,
+            color="#f8fafc",
+        ),
+        height=height,
+        margin=dict(
+            l=25,
+            r=25,
+            t=35,
+            b=30,
+        ),
+        legend=dict(
+            font=dict(
+                color="#f8fafc",
+                size=13,
+            ),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        xaxis=dict(
+            tickfont=dict(color="#f8fafc"),
+            title_font=dict(color="#f8fafc"),
+            gridcolor="#334155",
+            zerolinecolor="#475569",
+        ),
+        yaxis=dict(
+            tickfont=dict(color="#f8fafc"),
+            title_font=dict(color="#f8fafc"),
+            gridcolor="#334155",
+            zerolinecolor="#475569",
+        ),
     )
+
     return fig
 
 
@@ -239,9 +391,17 @@ def style_chart(fig):
 # ==========================================
 
 with st.sidebar:
+    st.markdown(
+        '<div class="iq-brand">◇ InventoryIQ</div>',
+        unsafe_allow_html=True,
+    )
 
-    st.title("◈ InventoryIQ")
-    st.caption("INVENTORY INTELLIGENCE PLATFORM")
+    st.markdown(
+        '<div class="iq-subtitle">'
+        'INVENTORY INTELLIGENCE PLATFORM'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.divider()
 
@@ -252,92 +412,50 @@ with st.sidebar:
             "📦 Products",
             "🛒 Sales",
             "📈 Analytics",
-            "🧠 AI Forecasting"
+            "🧠 AI Forecasting",
         ],
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.divider()
+
     st.subheader("System Status")
 
     try:
-        api_request("GET", "/")
-        st.success("● API Connected")
-        connected = True
-
+        health = api_request("GET", "/")
+        connected = health.get("status") == "running"
     except RuntimeError:
-        st.error("● Backend Offline")
         connected = False
+
+    if connected:
+        st.markdown(
+            '<div class="iq-status">● API Connected</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="iq-error">● API Disconnected</div>',
+            unsafe_allow_html=True,
+        )
 
     if st.button(
         "Refresh Dashboard",
-        use_container_width=True
+        use_container_width=True,
     ):
         st.rerun()
 
-    st.caption("InventoryIQ • v2.1")
-    st.caption(f"Backend: {API_URL}")
+    st.caption("InventoryIQ • v2.2")
 
-
-if not connected:
-    st.error(
-        "Backend unavailable. Check your Render service."
+    st.markdown(
+        f'<div class="iq-footer">'
+        f'Backend: <a href="{API_URL}" target="_blank">'
+        f'Render API</a></div>',
+        unsafe_allow_html=True,
     )
-    st.stop()
 
 
 # ==========================================
-# LOAD LIVE DATA
-# ==========================================
-
-products_response = get_data("/products")
-
-if products_response is None:
-    st.stop()
-
-products = normalize_list(
-    products_response, "products"
-)
-
-sales_response = get_data("/sales")
-
-if sales_response is None:
-    st.stop()
-
-sales = normalize_list(sales_response, "sales")
-
-total_products = len(products)
-
-available_units = sum(
-    int(p.get("quantity", 0))
-    for p in products
-)
-
-inventory_value = sum(
-    float(p.get("price", 0))
-    * int(p.get("quantity", 0))
-    for p in products
-)
-
-sales_revenue = sum(
-    float(s.get("total_amount", 0))
-    for s in sales
-)
-
-total_units_sold = sum(
-    int(s.get("quantity", 0))
-    for s in sales
-)
-
-low_stock_products = [
-    p for p in products
-    if int(p.get("quantity", 0))
-    <= int(p.get("low_stock_threshold", 10))
-]
-
-
-# ==========================================
-# OVERVIEW
+# PAGE 1 - INVENTORY OVERVIEW
 # ==========================================
 
 if page == "📊 Overview":
@@ -345,380 +463,405 @@ if page == "📊 Overview":
     st.title("Inventory Overview")
 
     st.caption(
-        "Real-time visibility into stock, revenue "
-        "and business performance."
+        "Real-time visibility into stock, "
+        "revenue and business performance."
     )
 
-    c1, c2, c3, c4 = st.columns(4)
+    try:
+        data = get_dashboard()
+        products = get_products()
 
-    c1.metric("Total Products", total_products)
-    c2.metric("Available Units", available_units)
-    c3.metric("Inventory Value", money(inventory_value))
-    c4.metric("Sales Revenue", money(sales_revenue))
+        c1, c2, c3, c4 = st.columns(4)
 
-    st.divider()
-
-    left, right = st.columns([2, 1])
-
-    with left:
-        st.subheader("Inventory Distribution")
-
-        if products:
-            chart_data = pd.DataFrame([
-                {
-                    "Product": product_name(p),
-                    "Stock": int(p.get("quantity", 0))
-                }
-                for p in products
-            ])
-
-            fig = px.bar(
-                chart_data,
-                x="Product",
-                y="Stock",
-                color="Product"
+        with c1:
+            st.metric(
+                "Total Products",
+                data.get("total_products", 0),
             )
 
-            fig.update_layout(showlegend=False)
-
-            st.plotly_chart(
-                style_chart(fig),
-                use_container_width=True
+        with c2:
+            st.metric(
+                "Available Units",
+                data.get("total_stock_units", 0),
             )
 
-        else:
-            st.info("Add products to view inventory.")
+        with c3:
+            st.metric(
+                "Inventory Value",
+                money(data.get("inventory_value", 0)),
+            )
 
-    with right:
-        st.subheader("Stock Health")
+        with c4:
+            st.metric(
+                "Sales Revenue",
+                money(data.get("total_sales_revenue", 0)),
+            )
 
-        healthy = (
-            total_products - len(low_stock_products)
+        st.divider()
+
+        left, right = st.columns([1.6, 1])
+
+        with left:
+            st.subheader("Inventory Distribution")
+
+            if products:
+                df = pd.DataFrame(products)
+
+                fig = px.bar(
+                    df,
+                    x="name",
+                    y="quantity",
+                    color_discrete_sequence=["#3b82f6"],
+                    labels={
+                        "name": "Product",
+                        "quantity": "Stock",
+                    },
+                )
+
+                fig.update_traces(
+                    text=df["quantity"],
+                    textposition="outside",
+                    textfont_color="#ffffff",
+                )
+
+                st.plotly_chart(
+                    style_chart(fig),
+                    use_container_width=True,
+                )
+
+            else:
+                st.info("No products available yet.")
+
+        with right:
+            st.subheader("Stock Health")
+
+            low_stock = int(
+                data.get("low_stock_count", 0)
+            )
+
+            total = int(
+                data.get("total_products", 0)
+            )
+
+            healthy = max(total - low_stock, 0)
+
+            if total > 0:
+                fig = go.Figure(
+                    data=[
+                        go.Pie(
+                            labels=[
+                                "Healthy",
+                                "Low / Out of Stock",
+                            ],
+                            values=[
+                                healthy,
+                                low_stock,
+                            ],
+                            hole=0.65,
+                            marker=dict(
+                                colors=[
+                                    "#34d399",
+                                    "#fb7185",
+                                ]
+                            ),
+                            textinfo="percent",
+                            textfont=dict(
+                                color="#ffffff",
+                                size=14,
+                            ),
+                        )
+                    ]
+                )
+
+                st.plotly_chart(
+                    style_chart(fig),
+                    use_container_width=True,
+                )
+
+            else:
+                st.info("Add products to view stock health.")
+
+        st.divider()
+
+        st.subheader("Low Stock Alerts")
+
+        low_products = data.get(
+            "low_stock_products", []
         )
 
-        if total_products:
-            fig = px.pie(
-                names=[
-                    "Healthy",
-                    "Low / Out of Stock"
-                ],
-                values=[
-                    healthy,
-                    len(low_stock_products)
-                ],
-                hole=0.65,
-                color_discrete_sequence=[
-                    "#34D399",
-                    "#FB7185"
-                ]
-            )
-
-            st.plotly_chart(
-                style_chart(fig),
-                use_container_width=True
-            )
-
-        else:
-            st.info("No stock data available.")
-
-    st.subheader("Inventory Alerts")
-
-    if low_stock_products:
-        for product in low_stock_products:
+        if low_products:
             st.warning(
-                f"{product_name(product)}: "
-                f"{product.get('quantity', 0)} "
-                "units remaining"
+                f"{len(low_products)} product(s) "
+                "need attention."
             )
-    else:
-        st.success(
-            "All products are above their stock thresholds."
-        )
 
-    st.subheader("Recent Transactions")
+            st.dataframe(
+                pd.DataFrame(low_products),
+                use_container_width=True,
+                hide_index=True,
+            )
 
-    recent_sales = sorted(
-        sales,
-        key=lambda s: s.get("sold_at") or "",
-        reverse=True
-    )[:10]
+        else:
+            st.success(
+                "All products are above their "
+                "low-stock thresholds."
+            )
 
-    display_table(recent_sales)
+    except RuntimeError as exc:
+        show_error(exc)
 
 
 # ==========================================
-# PRODUCT MANAGEMENT
+# PAGE 2 - PRODUCTS
 # ==========================================
 
 elif page == "📦 Products":
 
     st.title("Product Management")
-    st.caption("Organize and control your inventory.")
 
-    c1, c2, c3 = st.columns(3)
-
-    c1.metric("Products", total_products)
-    c2.metric(
-        "Low Stock Alerts",
-        len(low_stock_products)
-    )
-    c3.metric(
-        "Inventory Value",
-        money(inventory_value)
+    st.caption(
+        "Add, update, search and manage inventory."
     )
 
-    st.divider()
-
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Product Catalog",
-        "Add Product",
-        "Edit Product",
-        "Delete Product"
-    ])
-
-    # PRODUCT CATALOG
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [
+            "View Products",
+            "Add Product",
+            "Update Product",
+            "Delete Product",
+        ]
+    )
 
     with tab1:
-
-        st.subheader("Product Catalog")
+        st.subheader("Product Inventory")
 
         search = st.text_input(
             "Search Products",
-            placeholder="Enter product name"
+            placeholder="Enter product name",
         )
 
-        filtered = [
-            p for p in products
-            if search.lower()
-            in product_name(p).lower()
-        ]
+        try:
+            products = get_products(search)
 
-        table_data = [
-            {
-                "ID": p.get("id"),
-                "Product": product_name(p),
-                "Price": money(p.get("price", 0)),
-                "Stock": p.get("quantity", 0),
-                "Threshold": p.get(
-                    "low_stock_threshold", 10
-                ),
-                "Status": stock_status(p)
-            }
-            for p in filtered
-        ]
+            if products:
+                df = pd.DataFrame(products)
 
-        display_table(table_data)
+                st.dataframe(
+                    df,
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
-    # ADD PRODUCT
+                st.caption(
+                    f"{len(products)} product(s) found."
+                )
+
+            else:
+                st.info("No matching products found.")
+
+        except RuntimeError as exc:
+            show_error(exc)
 
     with tab2:
-
-        st.subheader("Create New Product")
+        st.subheader("Add New Product")
 
         with st.form("add_product_form"):
 
             name = st.text_input("Product Name")
 
             price = st.number_input(
-                "Price (₹)",
+                "Unit Price (₹)",
                 min_value=0.0,
-                value=0.0,
-                step=1.0
+                value=100.0,
+                step=1.0,
             )
 
             quantity = st.number_input(
-                "Initial Stock",
+                "Initial Quantity",
                 min_value=0,
-                value=0,
-                step=1
+                value=10,
+                step=1,
             )
 
             threshold = st.number_input(
                 "Low Stock Threshold",
                 min_value=0,
                 value=5,
-                step=1
+                step=1,
             )
 
             submitted = st.form_submit_button(
                 "Add Product",
-                type="primary"
+                type="primary",
             )
 
-            if submitted:
+        if submitted:
 
-                if not name.strip():
-                    st.error(
-                        "Product name is required."
-                    )
-                else:
-                    payload = {
-                        "name": name.strip(),
-                        "price": float(price),
-                        "quantity": int(quantity),
-                        "low_stock_threshold": int(threshold)
-                    }
+            if not name.strip():
+                st.error("Product name is required.")
 
-                    result = perform_action(
+            else:
+                try:
+                    result = api_request(
                         "POST",
                         "/products",
-                        payload
+                        json={
+                            "name": name.strip(),
+                            "price": float(price),
+                            "quantity": int(quantity),
+                            "low_stock_threshold": int(
+                                threshold
+                            ),
+                        },
                     )
 
-                    if result is not None:
-                        st.success(
-                            "Product added successfully."
-                        )
-                        st.rerun()
+                    st.success(
+                        f"Product added successfully! "
+                        f"ID: {result.get('id')}"
+                    )
 
-    # EDIT PRODUCT
+                except RuntimeError as exc:
+                    show_error(exc)
 
     with tab3:
-
         st.subheader("Update Product")
 
-        if products:
+        try:
+            products = get_products()
+            options = product_options(products)
 
-            options = {
-                f"{p['id']} - {product_name(p)}": p
-                for p in products
-            }
-
-            selected = st.selectbox(
-                "Select Product",
-                list(options.keys()),
-                key="edit_product"
-            )
-
-            current = options[selected]
-
-            with st.form(
-                f"edit_form_{current['id']}"
-            ):
-
-                updated_name = st.text_input(
-                    "Product Name",
-                    value=product_name(current)
+            if options:
+                selected = st.selectbox(
+                    "Select Product to Update",
+                    list(options),
                 )
 
-                updated_price = st.number_input(
-                    "Price (₹)",
-                    min_value=0.0,
-                    value=float(
-                        current.get("price", 0)
+                product = options[selected]
+
+                with st.form("update_product_form"):
+
+                    new_name = st.text_input(
+                        "Product Name",
+                        value=product["name"],
                     )
-                )
 
-                updated_quantity = st.number_input(
-                    "Stock Quantity",
-                    min_value=0,
-                    value=int(
-                        current.get("quantity", 0)
+                    new_price = st.number_input(
+                        "Price (₹)",
+                        min_value=0.0,
+                        value=float(product["price"]),
                     )
-                )
 
-                updated_threshold = st.number_input(
-                    "Low Stock Threshold",
-                    min_value=0,
-                    value=int(
-                        current.get(
-                            "low_stock_threshold", 10
+                    new_quantity = st.number_input(
+                        "Quantity",
+                        min_value=0,
+                        value=int(product["quantity"]),
+                    )
+
+                    new_threshold = st.number_input(
+                        "Low Stock Threshold",
+                        min_value=0,
+                        value=int(
+                            product["low_stock_threshold"]
+                        ),
+                    )
+
+                    update_clicked = (
+                        st.form_submit_button(
+                            "Save Changes",
+                            type="primary",
                         )
                     )
-                )
 
-                submitted = st.form_submit_button(
-                    "Save Changes",
-                    type="primary"
-                )
+                if update_clicked:
 
-                if submitted:
-
-                    if not updated_name.strip():
+                    if not new_name.strip():
                         st.error(
                             "Product name cannot be empty."
                         )
+
                     else:
-                        payload = {
-                            "name": updated_name.strip(),
-                            "price": float(updated_price),
-                            "quantity": int(
-                                updated_quantity
-                            ),
-                            "low_stock_threshold": int(
-                                updated_threshold
+                        try:
+                            api_request(
+                                "PUT",
+                                f"/products/{product['id']}",
+                                json={
+                                    "name": new_name.strip(),
+                                    "price": float(new_price),
+                                    "quantity": int(
+                                        new_quantity
+                                    ),
+                                    "low_stock_threshold": int(
+                                        new_threshold
+                                    ),
+                                },
                             )
-                        }
 
-                        result = perform_action(
-                            "PUT",
-                            f"/products/{current['id']}",
-                            payload
-                        )
-
-                        if result is not None:
                             st.success(
                                 "Product updated successfully."
                             )
-                            st.rerun()
 
-        else:
-            st.info("Add a product first.")
+                        except RuntimeError as exc:
+                            show_error(exc)
 
-    # DELETE PRODUCT
+            else:
+                st.info("No products available.")
+
+        except RuntimeError as exc:
+            show_error(exc)
 
     with tab4:
-
         st.subheader("Delete Product")
 
-        if products:
+        st.warning(
+            "Products with existing sales history "
+            "cannot be deleted."
+        )
 
-            options = {
-                f"{p['id']} - {product_name(p)}": p
-                for p in products
-            }
+        try:
+            products = get_products()
+            options = product_options(products)
 
-            selected = st.selectbox(
-                "Choose Product",
-                list(options.keys()),
-                key="delete_product"
-            )
-
-            current = options[selected]
-
-            st.warning(
-                "Products with sales history cannot be "
-                "deleted because their transaction records "
-                "must be preserved."
-            )
-
-            confirm = st.checkbox(
-                "I understand this action cannot be undone."
-            )
-
-            if st.button(
-                "Delete Product",
-                type="primary",
-                disabled=not confirm
-            ):
-
-                result = perform_action(
-                    "DELETE",
-                    f"/products/{current['id']}"
+            if options:
+                selected = st.selectbox(
+                    "Select Product to Delete",
+                    list(options),
+                    key="delete_product",
                 )
 
-                if result is not None:
-                    st.success(
-                        "Product deleted successfully."
-                    )
-                    st.rerun()
+                product = options[selected]
 
-        else:
-            st.info("No products available.")
+                confirm = st.checkbox(
+                    "I confirm that I want to delete "
+                    "this product."
+                )
+
+                if st.button(
+                    "Delete Product",
+                    type="primary",
+                    disabled=not confirm,
+                ):
+                    try:
+                        api_request(
+                            "DELETE",
+                            f"/products/{product['id']}",
+                        )
+
+                        st.success(
+                            "Product deleted successfully."
+                        )
+
+                    except RuntimeError as exc:
+                        show_error(exc)
+
+            else:
+                st.info("No products available.")
+
+        except RuntimeError as exc:
+            show_error(exc)
 
 
 # ==========================================
-# SALES MANAGEMENT
+# PAGE 3 - SALES
 # ==========================================
 
 elif page == "🛒 Sales":
@@ -726,126 +869,145 @@ elif page == "🛒 Sales":
     st.title("Sales Management")
 
     st.caption(
-        "Record transactions and track revenue."
+        "Record transactions and automatically "
+        "update inventory stock."
     )
 
-    c1, c2, c3 = st.columns(3)
+    try:
+        products = get_products()
+        options = product_options(products)
 
-    c1.metric("Transactions", len(sales))
-    c2.metric(
-        "Total Revenue",
-        money(sales_revenue)
-    )
-    c3.metric(
-        "Units Sold",
-        total_units_sold
-    )
+        if options:
 
-    st.divider()
+            st.subheader("Record New Sale")
 
-    st.subheader("Record New Sale")
+            with st.form("record_sale_form"):
 
-    available_products = [
-        p for p in products
-        if int(p.get("quantity", 0)) > 0
-    ]
+                selected = st.selectbox(
+                    "Select Product",
+                    list(options),
+                )
 
-    if available_products:
+                product = options[selected]
 
-        options = {
-            f"{p['id']} - {product_name(p)}": p
-            for p in available_products
-        }
+                available = int(product["quantity"])
 
-        selected = st.selectbox(
-            "Select Product",
-            list(options.keys())
-        )
+                quantity = st.number_input(
+                    "Quantity to Sell",
+                    min_value=1,
+                    value=1,
+                    step=1,
+                )
 
-        selected_product = options[selected]
+                st.write(
+                    f"**Unit Price:** "
+                    f"{money(product['price'])}"
+                )
 
-        max_stock = int(
-            selected_product.get("quantity", 0)
-        )
+                st.write(
+                    f"**Available Stock:** {available}"
+                )
 
-        with st.form("record_sale_form"):
+                estimated_total = (
+                    float(product["price"]) * quantity
+                )
 
-            sale_quantity = st.number_input(
-                "Quantity to Sell",
-                min_value=1,
-                max_value=max_stock,
-                value=1,
-                step=1
-            )
+                st.info(
+                    "Estimated Sale Total: "
+                    f"{money(estimated_total)}"
+                )
 
-            unit_price = float(
-                selected_product.get("price", 0)
-            )
-
-            sale_total = (
-                unit_price * int(sale_quantity)
-            )
-
-            st.write(
-                f"Unit Price: {money(unit_price)}"
-            )
-
-            st.info(
-                f"Estimated Sale Total: "
-                f"{money(sale_total)}"
-            )
-
-            submitted = st.form_submit_button(
-                "Record Sale",
-                type="primary"
-            )
+                submitted = st.form_submit_button(
+                    "Record Sale",
+                    type="primary",
+                )
 
             if submitted:
 
-                payload = {
-                    "product_id": int(
-                        selected_product["id"]
-                    ),
-                    "quantity": int(sale_quantity)
-                }
+                if quantity > available:
+                    st.error(
+                        "Insufficient stock. "
+                        f"Only {available} units available."
+                    )
 
-                result = perform_action(
-                    "POST",
-                    "/sales",
-                    payload
+                else:
+                    try:
+                        result = api_request(
+                            "POST",
+                            "/sales",
+                            json={
+                                "product_id": int(
+                                    product["id"]
+                                ),
+                                "quantity": int(quantity),
+                            },
+                        )
+
+                        st.success(
+                            "Sale recorded successfully!"
+                        )
+
+                        c1, c2, c3 = st.columns(3)
+
+                        c1.metric(
+                            "Sale ID",
+                            result.get("sale_id", "-"),
+                        )
+
+                        c2.metric(
+                            "Revenue",
+                            money(
+                                result.get(
+                                    "total_amount", 0
+                                )
+                            ),
+                        )
+
+                        c3.metric(
+                            "Remaining Stock",
+                            result.get(
+                                "remaining_stock", 0
+                            ),
+                        )
+
+                    except RuntimeError as exc:
+                        show_error(exc)
+
+        else:
+            st.info(
+                "Add a product before recording sales."
+            )
+
+        st.divider()
+
+        st.subheader("Sales History")
+
+        sales = get_sales()
+
+        if sales:
+            df = pd.DataFrame(sales)
+
+            if "sold_at" in df.columns:
+                df["sold_at"] = pd.to_datetime(
+                    df["sold_at"],
+                    errors="coerce",
                 )
 
-                if result is not None:
-                    st.success(
-                        "Sale recorded successfully."
-                    )
-                    st.rerun()
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
+            )
 
-    elif products:
-        st.warning(
-            "All products are out of stock."
-        )
+        else:
+            st.info("No sales transactions recorded.")
 
-    else:
-        st.info(
-            "Add products before recording sales."
-        )
-
-    st.divider()
-
-    st.subheader("Sales History")
-
-    display_table(
-        sorted(
-            sales,
-            key=lambda s: s.get("sold_at") or "",
-            reverse=True
-        )
-    )
+    except RuntimeError as exc:
+        show_error(exc)
 
 
 # ==========================================
-# SALES ANALYTICS
+# PAGE 4 - ANALYTICS
 # ==========================================
 
 elif page == "📈 Analytics":
@@ -853,185 +1015,182 @@ elif page == "📈 Analytics":
     st.title("Sales Analytics")
 
     st.caption(
-        "Understand sales and inventory performance."
+        "Understand sales trends and "
+        "inventory performance."
     )
 
-    c1, c2, c3, c4 = st.columns(4)
+    try:
+        dashboard_data = get_dashboard()
+        sales = get_sales()
+        products = get_products()
 
-    c1.metric(
-        "Revenue",
-        money(sales_revenue)
-    )
+        c1, c2, c3 = st.columns(3)
 
-    c2.metric(
-        "Transactions",
-        len(sales)
-    )
-
-    c3.metric(
-        "Units Sold",
-        total_units_sold
-    )
-
-    c4.metric(
-        "Inventory Value",
-        money(inventory_value)
-    )
-
-    st.divider()
-
-    if sales:
-
-        df = pd.DataFrame(sales)
-
-        df["total_amount"] = pd.to_numeric(
-            df["total_amount"],
-            errors="coerce"
-        ).fillna(0)
-
-        df["quantity"] = pd.to_numeric(
-            df["quantity"],
-            errors="coerce"
-        ).fillna(0)
-
-        product_names = {
-            str(p["id"]): product_name(p)
-            for p in products
-        }
-
-        df["Product"] = (
-            df["product_id"]
-            .astype(str)
-            .map(product_names)
-            .fillna(
-                df["product_id"].astype(str)
-            )
+        c1.metric(
+            "Revenue",
+            money(
+                dashboard_data.get(
+                    "total_sales_revenue", 0
+                )
+            ),
         )
 
-        grouped = (
-            df.groupby(
-                "Product",
-                as_index=False
-            )
-            .agg(
-                Revenue=("total_amount", "sum"),
-                Units_Sold=("quantity", "sum")
-            )
+        c2.metric(
+            "Transactions",
+            len(sales),
         )
 
-        left, right = st.columns(2)
+        c3.metric(
+            "Inventory Value",
+            money(
+                dashboard_data.get(
+                    "inventory_value", 0
+                )
+            ),
+        )
 
-        # REVENUE BY PRODUCT
+        st.divider()
 
-        with left:
+        if sales:
 
-            st.subheader("Revenue by Product")
+            df = pd.DataFrame(sales)
 
-            fig = px.bar(
-                grouped,
-                x="Product",
-                y="Revenue",
-                color="Product",
-                labels={
-                    "Revenue": "Revenue (₹)"
-                }
-            )
-
-            fig.update_layout(
-                showlegend=False
-            )
-
-            st.plotly_chart(
-                style_chart(fig),
-                use_container_width=True
-            )
-
-        # UNITS SOLD BY PRODUCT
-
-        with right:
-
-            st.subheader("Units Sold by Product")
-
-            fig = px.bar(
-                grouped,
-                x="Product",
-                y="Units_Sold",
-                color="Product",
-                labels={
-                    "Units_Sold": "Units Sold"
-                }
-            )
-
-            fig.update_layout(
-                showlegend=False
-            )
-
-            st.plotly_chart(
-                style_chart(fig),
-                use_container_width=True
-            )
-
-        # REVENUE OVER TIME
-
-        if "sold_at" in df.columns:
-
-            df["Date"] = pd.to_datetime(
+            df["sold_at"] = pd.to_datetime(
                 df["sold_at"],
                 errors="coerce",
-                utc=True
-            ).dt.date
-
-            daily = (
-                df.dropna(
-                    subset=["Date"]
-                )
-                .groupby(
-                    "Date",
-                    as_index=False
-                )["total_amount"]
-                .sum()
             )
 
-            if not daily.empty:
+            df["total_amount"] = pd.to_numeric(
+                df["total_amount"],
+                errors="coerce",
+            ).fillna(0)
 
-                st.subheader("Revenue Over Time")
+            df["quantity"] = pd.to_numeric(
+                df["quantity"],
+                errors="coerce",
+            ).fillna(0)
 
-                fig = px.line(
-                    daily,
-                    x="Date",
+            product_names = {
+                p["id"]: p["name"]
+                for p in products
+            }
+
+            df["product_name"] = df[
+                "product_id"
+            ].map(product_names).fillna(
+                "Unknown Product"
+            )
+
+            left, right = st.columns(2)
+
+            with left:
+                st.subheader("Daily Sales Revenue")
+
+                valid_dates = df.dropna(
+                    subset=["sold_at"]
+                ).copy()
+
+                if not valid_dates.empty:
+
+                    valid_dates["date"] = (
+                        valid_dates["sold_at"].dt.date
+                    )
+
+                    daily = (
+                        valid_dates.groupby(
+                            "date",
+                            as_index=False,
+                        )["total_amount"]
+                        .sum()
+                    )
+
+                    fig = px.line(
+                        daily,
+                        x="date",
+                        y="total_amount",
+                        markers=True,
+                        labels={
+                            "date": "Date",
+                            "total_amount": "Revenue (₹)",
+                        },
+                    )
+
+                    fig.update_traces(
+                        line_color="#38bdf8",
+                        marker_color="#60a5fa",
+                    )
+
+                    st.plotly_chart(
+                        style_chart(fig),
+                        use_container_width=True,
+                    )
+
+                else:
+                    st.info(
+                        "No valid sales dates available."
+                    )
+
+            with right:
+                st.subheader("Revenue by Product")
+
+                revenue_by_product = (
+                    df.groupby(
+                        "product_name",
+                        as_index=False,
+                    )["total_amount"]
+                    .sum()
+                )
+
+                fig = px.bar(
+                    revenue_by_product,
+                    x="product_name",
                     y="total_amount",
-                    markers=True,
+                    color_discrete_sequence=[
+                        "#34d399"
+                    ],
                     labels={
-                        "total_amount": "Revenue (₹)"
-                    }
+                        "product_name": "Product",
+                        "total_amount": "Revenue (₹)",
+                    },
                 )
 
                 st.plotly_chart(
                     style_chart(fig),
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
-        st.subheader("Transaction History")
+            st.divider()
 
-        if "sold_at" in df.columns:
-            df = df.sort_values(
-                "sold_at",
-                ascending=False
+            st.subheader("Transaction Data")
+
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
             )
 
-        display_table(
-            df.to_dict("records")
-        )
+            csv = df.to_csv(
+                index=False
+            ).encode("utf-8")
 
-    else:
+            st.download_button(
+                "Download Sales Report",
+                data=csv,
+                file_name="inventoryiq_sales.csv",
+                mime="text/csv",
+            )
 
-        st.info(
-            "Record sales to generate analytics."
-        )
+        else:
+            st.info(
+                "Record sales to generate analytics."
+            )
+
+    except RuntimeError as exc:
+        show_error(exc)
 
 
 # ==========================================
-# DEMAND FORECASTING
+# PAGE 5 - DEMAND FORECASTING
 # ==========================================
 
 elif page == "🧠 AI Forecasting":
@@ -1039,303 +1198,283 @@ elif page == "🧠 AI Forecasting":
     st.title("Demand Forecasting")
 
     st.caption(
-        "Data-driven inventory planning and "
-        "reorder recommendations."
+        "Data-driven inventory planning "
+        "and reorder recommendations."
     )
 
-    st.info(
-        "Forecasts are statistical estimates based "
-        "on recorded sales, not predictions from a "
-        "trained machine-learning model."
+    st.markdown(
+        '<div class="iq-info">'
+        'Forecasts are statistical estimates based '
+        'on recorded sales, not guarantees of '
+        'future demand or predictions from a '
+        'trained machine-learning model.'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
-    if not products:
+    try:
+        products = get_products()
+        options = product_options(products)
 
-        st.warning(
-            "Add products to generate forecasts."
-        )
+        if options:
 
-        st.stop()
-
-    options = {
-        f"{p['id']} - {product_name(p)}": p
-        for p in products
-    }
-
-    selected = st.selectbox(
-        "Select Product",
-        list(options.keys())
-    )
-
-    selected_product = options[selected]
-
-    history_days = st.slider(
-        "Sales History (Days)",
-        min_value=7,
-        max_value=365,
-        value=30
-    )
-
-    forecast_days = st.slider(
-        "Forecast Period (Days)",
-        min_value=7,
-        max_value=90,
-        value=30
-    )
-
-    lead_time = st.slider(
-        "Supplier Lead Time (Days)",
-        min_value=1,
-        max_value=30,
-        value=7
-    )
-
-    st.divider()
-
-    if st.button(
-        "Generate Demand Forecast",
-        type="primary"
-    ):
-
-        try:
-
-            forecast = api_request(
-                "GET",
-                f"/forecast/{selected_product['id']}",
-                params={
-                    "history_days": history_days,
-                    "forecast_days": forecast_days,
-                    "lead_time_days": lead_time
-                }
+            selected = st.selectbox(
+                "Select Product",
+                list(options),
             )
 
-            current_stock = int(
-                forecast.get("current_stock", 0)
+            product = options[selected]
+
+            history_days = st.slider(
+                "Sales History Period (Days)",
+                min_value=7,
+                max_value=365,
+                value=30,
             )
 
-            daily_demand = float(
-                forecast.get(
-                    "average_daily_demand", 0
-                )
+            forecast_days = st.slider(
+                "Forecast Period (Days)",
+                min_value=1,
+                max_value=90,
+                value=30,
             )
 
-            predicted_demand = int(
-                forecast.get(
-                    "predicted_units_needed", 0
-                )
-            )
-
-            reorder_quantity = int(
-                forecast.get(
-                    "recommended_reorder_quantity", 0
-                )
-            )
-
-            stockout_risk = forecast.get(
-                "stockout_risk",
-                "UNKNOWN"
-            )
-
-            days_until_stockout = forecast.get(
-                "estimated_days_until_stockout"
-            )
-
-            historical_units = int(
-                forecast.get(
-                    "historical_units_sold", 0
-                )
-            )
-
-            st.success(
-                "Demand forecast generated successfully."
-            )
-
-            st.subheader("Forecast Results")
-
-            c1, c2, c3, c4 = st.columns(4)
-
-            c1.metric(
-                "Current Stock",
-                current_stock
-            )
-
-            c2.metric(
-                "Daily Demand",
-                f"{daily_demand:.2f}"
-            )
-
-            c3.metric(
-                "Predicted Demand",
-                predicted_demand
-            )
-
-            c4.metric(
-                "Recommended Reorder",
-                reorder_quantity
+            lead_time_days = st.slider(
+                "Supplier Lead Time (Days)",
+                min_value=1,
+                max_value=30,
+                value=7,
             )
 
             st.divider()
 
-            left, right = st.columns([2, 1])
+            if st.button(
+                "Generate Demand Forecast",
+                type="primary",
+            ):
 
-            # FORECAST CHART
+                try:
+                    forecast = get_forecast(
+                        product["id"],
+                        history_days=history_days,
+                        forecast_days=forecast_days,
+                        lead_time_days=lead_time_days,
+                    )
 
-            with left:
+                    st.subheader(
+                        f"Forecast: {product['name']}"
+                    )
 
-                st.subheader(
-                    "Stock vs Predicted Demand"
-                )
+                    c1, c2, c3, c4 = st.columns(4)
 
-                chart_data = pd.DataFrame({
-                    "Metric": [
+                    c1.metric(
                         "Current Stock",
+                        forecast.get(
+                            "current_stock", 0
+                        ),
+                    )
+
+                    c2.metric(
                         "Predicted Demand",
-                        "Reorder Quantity"
-                    ],
-                    "Units": [
-                        current_stock,
-                        predicted_demand,
-                        reorder_quantity
-                    ]
-                })
-
-                fig = px.bar(
-                    chart_data,
-                    x="Metric",
-                    y="Units",
-                    color="Metric"
-                )
-
-                fig.update_layout(
-                    showlegend=False
-                )
-
-                st.plotly_chart(
-                    style_chart(fig),
-                    use_container_width=True
-                )
-
-            # STOCK RISK
-
-            with right:
-
-                st.subheader("Stockout Risk")
-
-                if stockout_risk in [
-                    "HIGH",
-                    "OUT_OF_STOCK"
-                ]:
-
-                    st.error(
-                        f"Risk: {stockout_risk}"
+                        forecast.get(
+                            "predicted_units_needed", 0
+                        ),
                     )
 
-                elif stockout_risk == "MEDIUM":
-
-                    st.warning(
-                        "Risk: MEDIUM"
+                    c3.metric(
+                        "Daily Demand",
+                        forecast.get(
+                            "average_daily_demand", 0
+                        ),
                     )
 
-                elif stockout_risk == "LOW":
+                    c4.metric(
+                        "Recommended Reorder",
+                        forecast.get(
+                            "recommended_reorder_quantity",
+                            0,
+                        ),
+                    )
 
-                    st.success(
-                        "Risk: LOW"
+                    risk = forecast.get(
+                        "stockout_risk", "UNKNOWN"
+                    )
+
+                    st.subheader("Stockout Risk")
+
+                    if risk in [
+                        "HIGH",
+                        "OUT_OF_STOCK",
+                    ]:
+                        st.error(
+                            f"Stockout Risk: {risk}"
+                        )
+
+                    elif risk == "MEDIUM":
+                        st.warning(
+                            f"Stockout Risk: {risk}"
+                        )
+
+                    else:
+                        st.success(
+                            f"Stockout Risk: {risk}"
+                        )
+
+                    days_remaining = forecast.get(
+                        "estimated_days_until_stockout"
+                    )
+
+                    if days_remaining is not None:
+                        st.write(
+                            "**Estimated Days Until "
+                            "Stockout:** "
+                            f"{days_remaining}"
+                        )
+
+                    st.divider()
+
+                    st.subheader(
+                        "Stock vs Predicted Demand"
+                    )
+
+                    chart_df = pd.DataFrame(
+                        {
+                            "Category": [
+                                "Current Stock",
+                                "Predicted Demand",
+                                "Recommended Reorder",
+                            ],
+                            "Units": [
+                                forecast.get(
+                                    "current_stock", 0
+                                ),
+                                forecast.get(
+                                    "predicted_units_needed",
+                                    0,
+                                ),
+                                forecast.get(
+                                    "recommended_reorder_quantity",
+                                    0,
+                                ),
+                            ],
+                        }
+                    )
+
+                    fig = px.bar(
+                        chart_df,
+                        x="Category",
+                        y="Units",
+                        color="Category",
+                        color_discrete_map={
+                            "Current Stock": "#3b82f6",
+                            "Predicted Demand": "#f59e0b",
+                            "Recommended Reorder": "#34d399",
+                        },
+                    )
+
+                    fig.update_layout(
+                        showlegend=False
+                    )
+
+                    st.plotly_chart(
+                        style_chart(fig),
+                        use_container_width=True,
+                    )
+
+                    st.subheader(
+                        "Forecast Explanation"
+                    )
+
+                    st.info(
+                        forecast.get(
+                            "note",
+                            "Forecast based on "
+                            "historical sales.",
+                        )
+                    )
+
+                    with st.expander(
+                        "View Detailed Forecast Data"
+                    ):
+                        st.json(forecast)
+
+                except RuntimeError as exc:
+                    show_error(exc)
+
+        else:
+            st.info(
+                "Add products to generate forecasts."
+            )
+
+        st.divider()
+
+        st.subheader("Stock Risk Summary")
+
+        if products:
+            risk_data = []
+
+            for p in products:
+
+                qty = int(p["quantity"])
+                threshold = int(
+                    p["low_stock_threshold"]
+                )
+
+                if qty == 0:
+                    risk_status = "Out of Stock"
+
+                elif qty <= threshold:
+                    risk_status = "Low Stock"
+
+                else:
+                    risk_status = "Healthy"
+
+                risk_data.append(
+                    {
+                        "Product": p["name"],
+                        "Current Stock": qty,
+                        "Threshold": threshold,
+                        "Status": risk_status,
+                    }
+                )
+
+            st.dataframe(
+                pd.DataFrame(risk_data),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        st.divider()
+
+        st.subheader("Reorder Recommendations")
+
+        if st.button(
+            "Generate All Recommendations"
+        ):
+            try:
+                recommendations = (
+                    get_recommendations()
+                )
+
+                if recommendations:
+                    st.dataframe(
+                        pd.DataFrame(
+                            recommendations
+                        ),
+                        use_container_width=True,
+                        hide_index=True,
                     )
 
                 else:
-
                     st.info(
-                        f"Risk: {stockout_risk}"
+                        "No recommendations available."
                     )
 
-                if days_until_stockout is not None:
+            except RuntimeError as exc:
+                show_error(exc)
 
-                    st.metric(
-                        "Estimated Days Until Stockout",
-                        days_until_stockout
-                    )
-
-                else:
-
-                    st.info(
-                        "Stockout time cannot be estimated "
-                        "without recorded demand."
-                    )
-
-            st.divider()
-
-            # REORDER RECOMMENDATIONS
-
-            st.subheader(
-                "Intelligent Reorder Recommendation"
-            )
-
-            if reorder_quantity > 0:
-
-                st.warning(
-                    f"Consider ordering "
-                    f"{reorder_quantity} additional units."
-                )
-
-            else:
-
-                st.success(
-                    "Current inventory does not require "
-                    "immediate replenishment based on "
-                    "the selected forecasting method."
-                )
-
-            st.subheader("Forecast Information")
-
-            info1, info2, info3 = st.columns(3)
-
-            info1.metric(
-                "Historical Units Sold",
-                historical_units
-            )
-
-            info2.metric(
-                "History Window",
-                f"{history_days} days"
-            )
-
-            info3.metric(
-                "Supplier Lead Time",
-                f"{lead_time} days"
-            )
-
-            st.caption(
-                forecast.get(
-                    "note",
-                    "Forecast based on historical sales."
-                )
-            )
-
-        except RuntimeError as error:
-
-            st.error(str(error))
-
-    st.divider()
-
-    # STOCK RISK SUMMARY
-
-    st.subheader("Stock Risk Summary")
-
-    risk_data = [
-        {
-            "Product": product_name(p),
-            "Current Stock": p.get(
-                "quantity", 0
-            ),
-            "Threshold": p.get(
-                "low_stock_threshold", 10
-            ),
-            "Status": stock_status(p)
-        }
-        for p in products
-    ]
-
-    display_table(risk_data)
+    except RuntimeError as exc:
+        show_error(exc)
 
 
 # ==========================================
@@ -1344,7 +1483,10 @@ elif page == "🧠 AI Forecasting":
 
 st.divider()
 
-st.caption(
-    "InventoryIQ | Inventory Management "
-    "and Demand Intelligence"
+st.markdown(
+    '<div class="iq-footer">'
+    'InventoryIQ | Inventory Management '
+    'and Demand Intelligence'
+    '</div>',
+    unsafe_allow_html=True,
 )
