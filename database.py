@@ -9,11 +9,29 @@ DATABASE_URL = os.getenv(
     "sqlite:///./inventory.db"
 )
 
+# Convert PostgreSQL URLs to use psycopg2
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(
-        "postgres://", "postgresql://", 1
+        "postgres://",
+        "postgresql+psycopg2://",
+        1
     )
 
+elif DATABASE_URL.startswith("postgresql+psycopg://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgresql+psycopg://",
+        "postgresql+psycopg2://",
+        1
+    )
+
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgresql://",
+        "postgresql+psycopg2://",
+        1
+    )
+
+# Configure database engine
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL,
@@ -25,10 +43,12 @@ else:
         pool_pre_ping=True
     )
 
+# Database session
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
+# Base class for database models
 Base = declarative_base()
