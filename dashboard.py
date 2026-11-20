@@ -1,6 +1,5 @@
 
 import os
-from html import escape
 
 import pandas as pd
 import plotly.express as px
@@ -9,9 +8,9 @@ import requests
 import streamlit as st
 
 
-# =====================================================
+# ============================================================
 # INVENTORYIQ | INVENTORY INTELLIGENCE PLATFORM
-# =====================================================
+# ============================================================
 
 st.set_page_config(
     page_title="InventoryIQ | Inventory Intelligence",
@@ -32,266 +31,278 @@ except (FileNotFoundError, KeyError):
     pass
 
 
-# =====================================================
-# PREMIUM DARK THEME
-# =====================================================
+# ============================================================
+# FINAL DARK THEME
+# ============================================================
 
-st.markdown("""
-<style>
-:root {
-    color-scheme: dark;
-}
+st.markdown(
+    """
+    <style>
+    :root {
+        color-scheme: dark;
+    }
 
-html, body, .stApp,
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"] {
-    background: #080f1f !important;
-    color: #f8fafc !important;
-}
+    html, body, .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        background-color: #080f1f !important;
+        color: #f8fafc !important;
+    }
 
-[data-testid="stHeader"] {
-    background: #080f1f !important;
-}
+    [data-testid="stHeader"] {
+        background-color: #080f1f !important;
+    }
 
-.block-container {
-    max-width: 1500px !important;
-    padding-top: 2rem !important;
-    padding-bottom: 3rem !important;
-    margin: 0 auto !important;
-}
+    .block-container {
+        max-width: 1500px !important;
+        padding-top: 2rem !important;
+        padding-bottom: 3rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        margin: 0 auto !important;
+    }
 
-[data-testid="stVerticalBlock"] {
-    overflow: visible !important;
-}
+    [data-testid="stSidebar"] {
+        background-color: #101b30 !important;
+        border-right: 1px solid #304363 !important;
+    }
 
-[data-testid="stMetric"] {
-    min-height: 140px !important;
-    overflow: visible !important;
-}
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #f8fafc !important;
+        opacity: 1 !important;
+    }
 
-[data-testid="stSidebar"] {
-    background: #101b30 !important;
-    border-right: 1px solid #304363;
-}
+    [data-testid="stSidebar"] [role="radiogroup"] label {
+        padding: 7px !important;
+        border-radius: 8px !important;
+    }
 
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: #f8fafc !important;
-    opacity: 1 !important;
-}
+    [data-testid="stSidebar"] [role="radiogroup"] label p {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
 
-[data-testid="stSidebar"] [role="radiogroup"] label {
-    padding: 7px;
-    border-radius: 8px;
-}
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        opacity: 1 !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.4px;
+    }
 
-[data-testid="stSidebar"] [role="radiogroup"] label p {
-    color: #ffffff !important;
-    font-weight: 600;
-}
+    h1 {
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+    }
 
-h1, h2, h3, h4, h5, h6 {
-    color: #ffffff !important;
-    opacity: 1 !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.4px;
-}
+    [data-testid="stMain"] p,
+    [data-testid="stMain"] label {
+        color: #e2e8f0;
+    }
 
-h1 {
-    font-size: 2.5rem !important;
-    font-weight: 800 !important;
-}
+    [data-testid="stCaptionContainer"] p {
+        color: #cbd5e1 !important;
+        opacity: 1 !important;
+    }
 
-[data-testid="stMain"] p,
-[data-testid="stMain"] label {
-    color: #e2e8f0;
-}
+    /* Metric cards: no forced overflow on parent containers */
 
-[data-testid="stCaptionContainer"] p {
-    color: #cbd5e1 !important;
-    opacity: 1 !important;
-}
+    [data-testid="stMetric"] {
+        background-color: #192740 !important;
+        border: 1px solid #34445f !important;
+        border-radius: 14px !important;
+        padding: 20px !important;
+        min-height: 135px;
+    }
 
-[data-testid="stMetric"] {
-    background: #17253e !important;
-    border: 1px solid #304363 !important;
-    border-radius: 15px !important;
-    padding: 22px !important;
-    min-height: 135px;
-}
+    [data-testid="stMetricLabel"] p {
+        color: #cbd5e1 !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+    }
 
-[data-testid="stMetricLabel"] p {
-    color: #cbd5e1 !important;
-    font-weight: 600 !important;
-    font-size: 14px !important;
-}
+    [data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-size: clamp(1.25rem, 2vw, 2rem) !important;
+        font-weight: 700 !important;
+    }
 
-[data-testid="stMetricValue"] {
-    color: #ffffff !important;
-    font-size: clamp(1.4rem, 2vw, 2.1rem) !important;
-    font-weight: 700 !important;
-}
+    [data-testid="stMetricValue"] > div {
+        color: #ffffff !important;
+    }
 
-[data-testid="stMetricDelta"] {
-    color: #34d399 !important;
-}
+    [data-testid="stMetricDelta"] {
+        color: #34d399 !important;
+    }
 
-[data-testid="stForm"] {
-    background: #14233b !important;
-    border: 1px solid #304363 !important;
-    border-radius: 14px !important;
-    padding: 20px !important;
-}
+    [data-testid="stForm"] {
+        background-color: #14233b !important;
+        border: 1px solid #304363 !important;
+        border-radius: 14px !important;
+        padding: 20px !important;
+    }
 
-div.stButton > button,
-div.stFormSubmitButton > button,
-div.stDownloadButton > button {
-    background: #1c2b45 !important;
-    color: #ffffff !important;
-    border: 1px solid #425575 !important;
-    border-radius: 9px !important;
-    font-weight: 600 !important;
-}
+    div.stButton > button,
+    div.stFormSubmitButton > button,
+    div.stDownloadButton > button {
+        background-color: #1c2b45 !important;
+        color: #ffffff !important;
+        border: 1px solid #425575 !important;
+        border-radius: 9px !important;
+        font-weight: 600 !important;
+    }
 
-div.stButton > button[kind="primary"],
-div.stFormSubmitButton > button[kind="primary"] {
-    background: #2563eb !important;
-    color: #ffffff !important;
-    border-color: #3b82f6 !important;
-}
+    div.stButton > button[kind="primary"],
+    div.stFormSubmitButton > button[kind="primary"] {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        border-color: #3b82f6 !important;
+    }
 
-div.stButton > button:hover,
-div.stDownloadButton > button:hover {
-    border-color: #60a5fa !important;
-    background: #263b5e !important;
-}
+    div.stButton > button:hover,
+    div.stDownloadButton > button:hover {
+        background-color: #263b5e !important;
+        border-color: #60a5fa !important;
+    }
 
-[data-baseweb="input"] > div,
-[data-baseweb="select"] > div,
-[data-baseweb="textarea"] > div {
-    background: #1b2a44 !important;
-    color: #ffffff !important;
-    border-color: #425575 !important;
-}
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"] > div,
+    [data-baseweb="textarea"] > div {
+        background-color: #1b2a44 !important;
+        color: #ffffff !important;
+        border-color: #425575 !important;
+    }
 
-[data-baseweb="input"] input,
-[data-baseweb="select"] input,
-[data-baseweb="textarea"] textarea {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-}
+    [data-baseweb="input"] input,
+    [data-baseweb="select"] input,
+    [data-baseweb="textarea"] textarea {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
 
-[data-baseweb="input"] input::placeholder {
-    color: #aebed3 !important;
-    -webkit-text-fill-color: #aebed3 !important;
-}
+    [data-baseweb="input"] input::placeholder {
+        color: #aebed3 !important;
+        -webkit-text-fill-color: #aebed3 !important;
+    }
 
-[data-baseweb="select"] span,
-[data-baseweb="select"] div {
-    color: #ffffff !important;
-}
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] div {
+        color: #ffffff !important;
+    }
 
-[data-baseweb="popover"],
-[data-baseweb="menu"],
-[role="listbox"] {
-    background: #1b2a44 !important;
-    color: #ffffff !important;
-}
+    [data-baseweb="popover"],
+    [data-baseweb="menu"],
+    [role="listbox"] {
+        background-color: #1b2a44 !important;
+        color: #ffffff !important;
+    }
 
-[data-testid="stDataFrame"] {
-    border: 1px solid #344762 !important;
-    border-radius: 12px !important;
-    overflow: hidden;
-}
+    [data-testid="stDataFrame"] {
+        border: 1px solid #344762 !important;
+        border-radius: 12px !important;
+    }
 
-[data-testid="stTabs"] button {
-    color: #cbd5e1 !important;
-    font-weight: 600 !important;
-}
+    [data-testid="stTabs"] button {
+        color: #cbd5e1 !important;
+        font-weight: 600 !important;
+    }
 
-[data-testid="stTabs"] button[aria-selected="true"] {
-    color: #60a5fa !important;
-}
+    [data-testid="stTabs"] button[aria-selected="true"] {
+        color: #60a5fa !important;
+    }
 
-[data-testid="stAlert"] {
-    border-radius: 10px !important;
-}
+    [data-testid="stAlert"] {
+        border-radius: 10px !important;
+    }
 
-[data-testid="stExpander"] {
-    background: #14233b !important;
-    border: 1px solid #344762 !important;
-    border-radius: 10px !important;
-}
+    [data-testid="stExpander"] {
+        background-color: #14233b !important;
+        border: 1px solid #344762 !important;
+        border-radius: 10px !important;
+    }
 
-hr {
-    border-color: #304363 !important;
-}
+    hr {
+        border-color: #304363 !important;
+    }
 
-a {
-    color: #93c5fd !important;
-}
+    a {
+        color: #93c5fd !important;
+    }
 
-.iq-brand {
-    color: #ffffff !important;
-    font-size: 27px;
-    font-weight: 800;
-    letter-spacing: -0.6px;
-    margin-bottom: 8px;
-}
+    .iq-brand {
+        color: #ffffff !important;
+        font-size: 27px;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        margin-bottom: 8px;
+    }
 
-.iq-subtitle {
-    color: #cbd5e1 !important;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.8px;
-    margin-bottom: 24px;
-}
+    .iq-subtitle {
+        color: #cbd5e1 !important;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        margin-bottom: 24px;
+    }
 
-.iq-status {
-    background: #064e3b;
-    color: #ffffff !important;
-    border: 1px solid #10b981;
-    border-radius: 10px;
-    padding: 15px;
-    font-weight: 700;
-    margin-bottom: 15px;
-}
+    .iq-status {
+        background-color: #064e3b;
+        color: #ffffff !important;
+        border: 1px solid #10b981;
+        border-radius: 10px;
+        padding: 15px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
 
-.iq-error {
-    background: #450a0a;
-    color: #ffffff !important;
-    border: 1px solid #ef4444;
-    border-radius: 10px;
-    padding: 15px;
-    font-weight: 600;
-    margin-bottom: 15px;
-}
+    .iq-error {
+        background-color: #450a0a;
+        color: #ffffff !important;
+        border: 1px solid #ef4444;
+        border-radius: 10px;
+        padding: 15px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
 
-.iq-info {
-    background: #172554;
-    color: #ffffff !important;
-    border: 1px solid #3b82f6;
-    border-radius: 10px;
-    padding: 15px;
-    margin: 15px 0;
-}
+    .iq-info {
+        background-color: #172554;
+        color: #ffffff !important;
+        border: 1px solid #3b82f6;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+    }
 
-.iq-footer {
-    color: #cbd5e1 !important;
-    font-size: 13px;
-    margin-top: 24px;
-}
-</style>
-""", unsafe_allow_html=True)
+    .iq-footer {
+        color: #cbd5e1 !important;
+        font-size: 13px;
+        margin-top: 24px;
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        h1 {
+            font-size: 2rem !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
-# =====================================================
+# ============================================================
 # API HELPERS
-# =====================================================
+# ============================================================
 
 def api_request(method, endpoint, **kwargs):
     url = f"{API_URL}{endpoint}"
@@ -308,7 +319,7 @@ def api_request(method, endpoint, **kwargs):
             try:
                 body = response.json()
                 detail = body.get("detail", response.text)
-            except ValueError:
+            except (ValueError, AttributeError):
                 detail = response.text
 
             raise RuntimeError(
@@ -345,7 +356,11 @@ def api_request(method, endpoint, **kwargs):
 
 def get_products(search=None):
     params = {"search": search} if search else None
-    return api_request("GET", "/products", params=params)
+    return api_request(
+        "GET",
+        "/products",
+        params=params,
+    )
 
 
 def get_sales():
@@ -392,15 +407,15 @@ def product_options(products):
     }
 
 
-# =====================================================
+# ============================================================
 # CHART DESIGN
-# =====================================================
+# ============================================================
 
 def style_chart(fig, height=370):
     fig.update_layout(
         template="plotly_dark",
         paper_bgcolor="#080f1f",
-        plot_bgcolor="#17253e",
+        plot_bgcolor="#192740",
         font=dict(
             family="Arial, sans-serif",
             size=14,
@@ -408,10 +423,10 @@ def style_chart(fig, height=370):
         ),
         height=height,
         margin=dict(
-            l=30,
-            r=30,
-            t=35,
-            b=35,
+            l=35,
+            r=35,
+            t=45,
+            b=45,
         ),
         legend=dict(
             font=dict(
@@ -437,9 +452,9 @@ def style_chart(fig, height=370):
     return fig
 
 
-# =====================================================
+# ============================================================
 # SIDEBAR
-# =====================================================
+# ============================================================
 
 with st.sidebar:
 
@@ -511,9 +526,9 @@ with st.sidebar:
     )
 
 
-# =====================================================
-# PAGE 1 - OVERVIEW
-# =====================================================
+# ============================================================
+# PAGE 1 - INVENTORY OVERVIEW
+# ============================================================
 
 if page == "📊 Overview":
 
@@ -530,25 +545,29 @@ if page == "📊 Overview":
 
         c1, c2, c3, c4 = st.columns(4)
 
-        c1.metric(
-            "Total Products",
-            data.get("total_products", 0),
-        )
+        with c1:
+            st.metric(
+                "Total Products",
+                data.get("total_products", 0),
+            )
 
-        c2.metric(
-            "Available Units",
-            data.get("total_stock_units", 0),
-        )
+        with c2:
+            st.metric(
+                "Available Units",
+                data.get("total_stock_units", 0),
+            )
 
-        c3.metric(
-            "Inventory Value",
-            money(data.get("inventory_value", 0)),
-        )
+        with c3:
+            st.metric(
+                "Inventory Value",
+                money(data.get("inventory_value", 0)),
+            )
 
-        c4.metric(
-            "Sales Revenue",
-            money(data.get("total_sales_revenue", 0)),
-        )
+        with c4:
+            st.metric(
+                "Sales Revenue",
+                money(data.get("total_sales_revenue", 0)),
+            )
 
         st.divider()
 
@@ -575,6 +594,11 @@ if page == "📊 Overview":
                     text=df["quantity"],
                     textposition="outside",
                     textfont_color="#ffffff",
+                    cliponaxis=False,
+                )
+
+                fig.update_layout(
+                    showlegend=False,
                 )
 
                 st.plotly_chart(
@@ -625,6 +649,15 @@ if page == "📊 Overview":
                     ]
                 )
 
+                fig.update_layout(
+                    legend=dict(
+                        orientation="h",
+                        y=-0.1,
+                        x=0.5,
+                        xanchor="center",
+                    )
+                )
+
                 st.plotly_chart(
                     style_chart(fig),
                     use_container_width=True,
@@ -638,7 +671,8 @@ if page == "📊 Overview":
         st.subheader("Low Stock Alerts")
 
         low_products = data.get(
-            "low_stock_products", []
+            "low_stock_products",
+            [],
         )
 
         if low_products:
@@ -662,9 +696,9 @@ if page == "📊 Overview":
         show_error(exc)
 
 
-# =====================================================
-# PAGE 2 - PRODUCTS
-# =====================================================
+# ============================================================
+# PAGE 2 - PRODUCT MANAGEMENT
+# ============================================================
 
 elif page == "📦 Products":
 
@@ -910,9 +944,9 @@ elif page == "📦 Products":
             show_error(exc)
 
 
-# =====================================================
-# PAGE 3 - SALES
-# =====================================================
+# ============================================================
+# PAGE 3 - SALES MANAGEMENT
+# ============================================================
 
 elif page == "🛒 Sales":
 
@@ -994,26 +1028,29 @@ elif page == "🛒 Sales":
 
                         c1, c2, c3 = st.columns(3)
 
-                        c1.metric(
-                            "Sale ID",
-                            result.get("sale_id", "-"),
-                        )
+                        with c1:
+                            st.metric(
+                                "Sale ID",
+                                result.get("sale_id", "-"),
+                            )
 
-                        c2.metric(
-                            "Revenue",
-                            money(
+                        with c2:
+                            st.metric(
+                                "Revenue",
+                                money(
+                                    result.get(
+                                        "total_amount", 0
+                                    )
+                                ),
+                            )
+
+                        with c3:
+                            st.metric(
+                                "Remaining Stock",
                                 result.get(
-                                    "total_amount", 0
-                                )
-                            ),
-                        )
-
-                        c3.metric(
-                            "Remaining Stock",
-                            result.get(
-                                "remaining_stock", 0
-                            ),
-                        )
+                                    "remaining_stock", 0
+                                ),
+                            )
 
                     except RuntimeError as exc:
                         show_error(exc)
@@ -1050,9 +1087,9 @@ elif page == "🛒 Sales":
         show_error(exc)
 
 
-# =====================================================
+# ============================================================
 # PAGE 4 - SALES ANALYTICS
-# =====================================================
+# ============================================================
 
 elif page == "📈 Analytics":
 
@@ -1070,28 +1107,31 @@ elif page == "📈 Analytics":
 
         c1, c2, c3 = st.columns(3)
 
-        c1.metric(
-            "Revenue",
-            money(
-                dashboard_data.get(
-                    "total_sales_revenue", 0
-                )
-            ),
-        )
+        with c1:
+            st.metric(
+                "Revenue",
+                money(
+                    dashboard_data.get(
+                        "total_sales_revenue", 0
+                    )
+                ),
+            )
 
-        c2.metric(
-            "Transactions",
-            len(sales),
-        )
+        with c2:
+            st.metric(
+                "Transactions",
+                len(sales),
+            )
 
-        c3.metric(
-            "Inventory Value",
-            money(
-                dashboard_data.get(
-                    "inventory_value", 0
-                )
-            ),
-        )
+        with c3:
+            st.metric(
+                "Inventory Value",
+                money(
+                    dashboard_data.get(
+                        "inventory_value", 0
+                    )
+                ),
+            )
 
         st.divider()
 
@@ -1231,9 +1271,9 @@ elif page == "📈 Analytics":
         show_error(exc)
 
 
-# =====================================================
+# ============================================================
 # PAGE 5 - AI FORECASTING
-# =====================================================
+# ============================================================
 
 elif page == "🧠 AI Forecasting":
 
@@ -1341,34 +1381,38 @@ elif page == "🧠 AI Forecasting":
 
                 c1, c2, c3, c4 = st.columns(4)
 
-                c1.metric(
-                    "Current Stock",
-                    forecast.get(
-                        "current_stock", 0
-                    ),
-                )
+                with c1:
+                    st.metric(
+                        "Current Stock",
+                        forecast.get(
+                            "current_stock", 0
+                        ),
+                    )
 
-                c2.metric(
-                    "Predicted Demand",
-                    forecast.get(
-                        "predicted_units_needed", 0
-                    ),
-                )
+                with c2:
+                    st.metric(
+                        "Predicted Demand",
+                        forecast.get(
+                            "predicted_units_needed", 0
+                        ),
+                    )
 
-                c3.metric(
-                    "Daily Demand",
-                    forecast.get(
-                        "average_daily_demand", 0
-                    ),
-                )
+                with c3:
+                    st.metric(
+                        "Daily Demand",
+                        forecast.get(
+                            "average_daily_demand", 0
+                        ),
+                    )
 
-                c4.metric(
-                    "Recommended Reorder",
-                    forecast.get(
-                        "recommended_reorder_quantity",
-                        0,
-                    ),
-                )
+                with c4:
+                    st.metric(
+                        "Recommended Reorder",
+                        forecast.get(
+                            "recommended_reorder_quantity",
+                            0,
+                        ),
+                    )
 
                 risk = forecast.get(
                     "stockout_risk", "UNKNOWN"
@@ -1552,9 +1596,9 @@ elif page == "🧠 AI Forecasting":
         show_error(exc)
 
 
-# =====================================================
+# ============================================================
 # FOOTER
-# =====================================================
+# ============================================================
 
 st.divider()
 
