@@ -1,104 +1,93 @@
+# InventoryIQ – Inventory Intelligence Platform
 
-# AI-Enhanced Inventory Management System
+**A full-stack inventory management and demand intelligence platform built with Python, FastAPI, PostgreSQL, and Streamlit.**
 
-A Python-based inventory management REST API built using FastAPI, SQLAlchemy, and SQLite.
+InventoryIQ helps businesses manage products, track sales, monitor stock levels, analyze revenue, and make data-driven inventory decisions through demand forecasting and automated reorder recommendations.
 
-## Overview
+## Key Features
 
-This application helps businesses manage products, track sales, monitor stock levels, analyze inventory performance, and estimate future product demand.
-
-## Features
-
-- Product creation, viewing, updating, and deletion
-- Product search
-- Sales recording and stock deduction
-- Low-stock alerts
-- Inventory analytics dashboard API
-- Historical sales-based demand forecasting
-- Stockout risk assessment
-- Intelligent reorder recommendations
-- Interactive API documentation using Swagger UI
+- **Inventory Management:** Add, view, update, search, and delete products.
+- **Sales Management:** Record sales transactions with automatic stock deduction.
+- **Interactive Dashboard:** Monitor inventory value, available stock, sales revenue, and product performance.
+- **Low-Stock Alerts:** Identify products approaching or reaching their stock thresholds.
+- **Demand Forecasting:** Estimate future inventory requirements using historical sales averages.
+- **Reorder Recommendations:** Calculate suggested replenishment quantities based on demand, stock levels, and supplier lead times.
+- **REST API:** Access inventory and sales operations through documented FastAPI endpoints.
 
 ## Technology Stack
 
-- Python
-- FastAPI
-- SQLAlchemy
-- SQLite
-- Pydantic
-- Uvicorn
+| Component | Technologies |
+|---|---|
+| Programming Language | Python |
+| Backend | FastAPI |
+| Database | PostgreSQL (Neon), SQLite |
+| ORM | SQLAlchemy |
+| Frontend | Streamlit |
+| Data Analysis | Pandas |
+| Data Visualization | Plotly |
+| API Testing | Swagger UI, Pytest |
+| Deployment | Render, Streamlit Community Cloud |
 
-## Installation
+## System Architecture
 
-Clone the repository and open its folder.
-
-Create a virtual environment:
-
-```bash
-python -m venv .venv
+```text
+           Streamlit Dashboard
+                   |
+               REST API
+                   |
+             FastAPI Backend
+                   |
+               SQLAlchemy
+                   |
+           Neon PostgreSQL
+                   |
+        Inventory & Sales Data
+                   |
+        Demand Forecasting Logic
+                   |
+         Reorder Recommendations
 ```
-
-Activate it on Windows:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run the application:
-
-```bash
-python -m uvicorn main:app --reload
-```
-
-## API Documentation
-
-Open:
-
-http://127.0.0.1:8000/docs
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | / | API status |
-| POST | /products | Create product |
-| GET | /products | List/search products |
-| GET | /products/{product_id} | View product |
-| PUT | /products/{product_id} | Update product |
-| DELETE | /products/{product_id} | Delete product |
-| GET | /products/low-stock | Low-stock alerts |
-| POST | /sales | Record sale |
-| GET | /sales | Sales history |
-| GET | /dashboard | Inventory analytics |
-| GET | /forecast/{product_id} | Demand forecast |
-| GET | /recommendations | Reorder recommendations |
+|---|---|---|
+| GET | `/` | API status |
+| POST | `/products` | Create a product |
+| GET | `/products` | List and search products |
+| GET | `/products/{product_id}` | Retrieve product details |
+| PUT | `/products/{product_id}` | Update product |
+| DELETE | `/products/{product_id}` | Delete product |
+| GET | `/products/low-stock` | Retrieve low-stock products |
+| POST | `/sales` | Record a sale |
+| GET | `/sales` | Retrieve sales history |
+| GET | `/dashboard` | Retrieve inventory and revenue metrics |
+| GET | `/forecast/{product_id}` | Generate a demand forecast |
+| GET | `/recommendations` | Retrieve reorder recommendations |
 
 ## Demand Forecasting
 
-The forecasting feature uses historical sales to estimate average daily demand.
+InventoryIQ uses historical sales data to estimate demand.
 
+**Average Daily Demand**
+
+```text
 Average Daily Demand = Units Sold / Historical Days
+```
 
-Forecast Demand = Average Daily Demand × Forecast Days
+**Predicted Demand**
 
-Reorder recommendations use estimated demand during supplier lead time and the configured low-stock threshold.
+```text
+Predicted Demand = Average Daily Demand × Forecast Days
+```
 
-This is a statistical forecasting approach, not a trained machine-learning model.
+**Recommended Reorder Quantity**
 
-## Database
+```text
+Reorder Quantity = max(
+    0,
+    Lead Time Demand + Safety Stock - Current Stock
+)
+```
 
-The application uses SQLite. The database file is automatically created when the application starts.
-
-## Future Improvements
-
-- User authentication and role-based access
-- Interactive frontend dashboard
-- Advanced machine-learning forecasting
-- CSV export and reporting
-- Cloud deployment
+The forecasting system uses a statistical historical
