@@ -304,7 +304,6 @@ sales_revenue = sum(
     float(s.get("total_amount", 0))
     for s in sales
 )
-)
 
 low_stock_products = [
     p for p in products
