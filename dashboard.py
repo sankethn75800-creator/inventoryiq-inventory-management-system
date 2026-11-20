@@ -54,9 +54,19 @@ html, body, .stApp,
 }
 
 .block-container {
-    max-width: 1500px;
-    padding-top: 3rem;
-    padding-bottom: 2rem;
+    max-width: 1500px !important;
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    margin: 0 auto !important;
+}
+
+[data-testid="stVerticalBlock"] {
+    overflow: visible !important;
+}
+
+[data-testid="stMetric"] {
+    min-height: 140px !important;
+    overflow: visible !important;
 }
 
 [data-testid="stSidebar"] {
