@@ -9,25 +9,25 @@ DATABASE_URL = os.getenv(
     "sqlite:///./inventory.db"
 )
 
-# Convert PostgreSQL URLs to use psycopg2
+# Configure PostgreSQL to use psycopg version 3
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(
         "postgres://",
-        "postgresql+psycopg2://",
+        "postgresql+psycopg://",
         1
     )
 
-elif DATABASE_URL.startswith("postgresql+psycopg://"):
+elif DATABASE_URL.startswith("postgresql+psycopg2://"):
     DATABASE_URL = DATABASE_URL.replace(
-        "postgresql+psycopg://",
         "postgresql+psycopg2://",
+        "postgresql+psycopg://",
         1
     )
 
 elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace(
         "postgresql://",
-        "postgresql+psycopg2://",
+        "postgresql+psycopg://",
         1
     )
 
